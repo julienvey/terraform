@@ -194,7 +194,7 @@ func resourceAwsDbInstance() *schema.Resource {
 }
 
 func resourceAwsDbInstanceCreate(d *schema.ResourceData, meta interface{}) error {
-	conn := meta.(*AWSClient).rdsSDKconn
+	conn := meta.(*AWSClient).rdsconn
 	tags := tagsFromMapRDS(d.Get("tags").(map[string]interface{}))
 	opts := rds.CreateDBInstanceInput{
 		AllocatedStorage:     aws.Long(int64(d.Get("allocated_storage").(int))),
@@ -345,7 +345,7 @@ func resourceAwsDbInstanceRead(d *schema.ResourceData, meta interface{}) error {
 
 	// list tags for resource
 	// set tags
-	conn := meta.(*AWSClient).rdsSDKconn
+	conn := meta.(*AWSClient).rdsconn
 	arn, err := buildRDSARN(d, meta)
 	if err != nil {
 		name := "<empty>"
@@ -396,7 +396,7 @@ func resourceAwsDbInstanceRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceAwsDbInstanceDelete(d *schema.ResourceData, meta interface{}) error {
-	conn := meta.(*AWSClient).rdsSDKconn
+	conn := meta.(*AWSClient).rdsconn
 
 	log.Printf("[DEBUG] DB Instance destroy: %v", d.Id())
 
@@ -433,7 +433,7 @@ func resourceAwsDbInstanceDelete(d *schema.ResourceData, meta interface{}) error
 }
 
 func resourceAwsDbInstanceUpdate(d *schema.ResourceData, meta interface{}) error {
-	conn := meta.(*AWSClient).rdsSDKconn
+	conn := meta.(*AWSClient).rdsconn
 
 	d.Partial(true)
 
@@ -527,7 +527,7 @@ func resourceAwsDbInstanceUpdate(d *schema.ResourceData, meta interface{}) error
 
 func resourceAwsBbInstanceRetrieve(
 	d *schema.ResourceData, meta interface{}) (*rds.DBInstance, error) {
-	conn := meta.(*AWSClient).rdsSDKconn
+	conn := meta.(*AWSClient).rdsconn
 
 	opts := rds.DescribeDBInstancesInput{
 		DBInstanceIdentifier: aws.String(d.Id()),
