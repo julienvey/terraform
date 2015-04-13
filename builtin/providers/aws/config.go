@@ -16,7 +16,9 @@ import (
 	"github.com/hashicorp/aws-sdk-go/gen/s3"
 
 	awsSDK "github.com/awslabs/aws-sdk-go/aws"
+	awsIAM "github.com/awslabs/aws-sdk-go/service/IAM"
 	awsEC2 "github.com/awslabs/aws-sdk-go/service/ec2"
+	awsRDS "github.com/awslabs/aws-sdk-go/service/rds"
 )
 
 type Config struct {
@@ -36,6 +38,8 @@ type AWSClient struct {
 	rdsconn         *rds.RDS
 	iamconn         *iam.IAM
 	ec2SDKconn      *awsEC2.EC2
+	rdsSDKconn      *awsRDS.RDS
+	iamSDKconn      *awsIAM.IAM
 }
 
 // Client configures and returns a fully initailized AWSClient
@@ -79,10 +83,19 @@ func (c *Config) Client() (interface{}, error) {
 		client.iamconn = iam.New(creds, c.Region, nil)
 
 		sdkCreds := awsSDK.DetectCreds(c.AccessKey, c.SecretKey, c.Token)
-		client.ec2SDKconn = awsEC2.New(&awsSDK.Config{
+		awsConfig := &awsSDK.Config{
 			Credentials: sdkCreds,
 			Region:      c.Region,
-		})
+		}
+
+		log.Println("[INFO] Initializing EC2 SDK Connection")
+		client.ec2SDKconn = awsEC2.New(awsConfig)
+
+		log.Println("[INFO] Initializing RDS SDK Connection")
+		client.rdsSDKconn = awsRDS.New(awsConfig)
+
+		log.Println("[INFO] Initializing IAM SDK Connection")
+		client.iamSDKconn = awsIAM.New(awsConfig)
 	}
 
 	if len(errs) > 0 {
