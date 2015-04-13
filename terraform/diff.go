@@ -206,56 +206,7 @@ func (d *ModuleDiff) String() string {
 
 	for _, name := range names {
 		rdiff := d.Resources[name]
-
-		crud := "UPDATE"
-		if rdiff.RequiresNew() && (rdiff.Destroy || rdiff.DestroyTainted) {
-			crud = "DESTROY/CREATE"
-		} else if rdiff.Destroy {
-			crud = "DESTROY"
-		} else if rdiff.RequiresNew() {
-			crud = "CREATE"
-		}
-
-		buf.WriteString(fmt.Sprintf(
-			"%s: %s\n",
-			crud,
-			name))
-
-		keyLen := 0
-		keys := make([]string, 0, len(rdiff.Attributes))
-		for key, _ := range rdiff.Attributes {
-			if key == "id" {
-				continue
-			}
-
-			keys = append(keys, key)
-			if len(key) > keyLen {
-				keyLen = len(key)
-			}
-		}
-		sort.Strings(keys)
-
-		for _, attrK := range keys {
-			attrDiff := rdiff.Attributes[attrK]
-
-			v := attrDiff.New
-			if attrDiff.NewComputed {
-				v = "<computed>"
-			}
-
-			newResource := ""
-			if attrDiff.RequiresNew {
-				newResource = " (forces new resource)"
-			}
-
-			buf.WriteString(fmt.Sprintf(
-				"  %s:%s %#v => %#v%s\n",
-				attrK,
-				strings.Repeat(" ", keyLen-len(attrK)),
-				attrDiff.Old,
-				v,
-				newResource))
-		}
+		buf.WriteString(rdiff.String(name))
 	}
 
 	return buf.String()
@@ -407,6 +358,11 @@ func (d *InstanceDiff) Same(d2 *InstanceDiff) (bool, string) {
 
 		_, ok := d2.Attributes[k]
 		if !ok {
+			// If there's no new attribute, and the old diff expected the attribute
+			// to be removed, that's just fine.
+			if diffOld.NewRemoved {
+				continue
+			}
 			// No exact match, but maybe this is a set containing computed
 			// values. So check if there is an approximate hash in the key
 			// and if so, try to match the key.
@@ -488,4 +444,58 @@ func (d *InstanceDiff) Same(d2 *InstanceDiff) (bool, string) {
 	}
 
 	return true, ""
+}
+
+func (d *InstanceDiff) String(name string) string {
+	var buf bytes.Buffer
+	crud := "UPDATE"
+	if d.RequiresNew() && (d.Destroy || d.DestroyTainted) {
+		crud = "DESTROY/CREATE"
+	} else if d.Destroy {
+		crud = "DESTROY"
+	} else if d.RequiresNew() {
+		crud = "CREATE"
+	}
+
+	buf.WriteString(fmt.Sprintf(
+		"%s: %s\n",
+		crud,
+		name))
+
+	keyLen := 0
+	keys := make([]string, 0, len(d.Attributes))
+	for key, _ := range d.Attributes {
+		if key == "id" {
+			continue
+		}
+
+		keys = append(keys, key)
+		if len(key) > keyLen {
+			keyLen = len(key)
+		}
+	}
+	sort.Strings(keys)
+
+	for _, attrK := range keys {
+		attd := d.Attributes[attrK]
+
+		v := attd.New
+		if attd.NewComputed {
+			v = "<computed>"
+		}
+
+		newResource := ""
+		if attd.RequiresNew {
+			newResource = " (forces new resource)"
+		}
+
+		buf.WriteString(fmt.Sprintf(
+			"  %s:%s %#v => %#v%s\n",
+			attrK,
+			strings.Repeat(" ", keyLen-len(attrK)),
+			attd.Old,
+			v,
+			newResource))
+	}
+	return buf.String()
 }
