@@ -52,6 +52,7 @@ func Provider() terraform.ResourceProvider {
 			"aws_db_subnet_group":              resourceAwsDbSubnetGroup(),
 			"aws_eip":                          resourceAwsEip(),
 			"aws_elb":                          resourceAwsElb(),
+			"aws_elb_app_cookie_stickiness":    resourceAwsElbAppCookieStickinessPolicy(),
 			"aws_instance":                     resourceAwsInstance(),
 			"aws_internet_gateway":             resourceAwsInternetGateway(),
 			"aws_key_pair":                     resourceAwsKeyPair(),
